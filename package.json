@@ -1,0 +1,67 @@
+{
+  "name": "kaunta",
+  "version": "1.0.0",
+  "description": "Kaunta — Retail Management System",
+  "author": "Maseghe Enterprise Ltd",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "build:x64": "electron-builder --win --x64",
+    "build:ia32": "electron-builder --win --ia32",
+    "build:all": "electron-builder --win --x64 --ia32",
+    "build:installer": "electron-builder --win nsis --x64"
+  },
+  "build": {
+    "appId": "com.maseghe.kauntapos",
+    "productName": "Kaunta POS",
+    "copyright": "Copyright © 2026 Maseghe Enterprise Ltd",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "Maseghe.ico",
+      "backup_popup.html",
+      "restore.html"
+    ],
+    "extraResources": [
+      { "from": "sultan_pos", "to": "sultan_pos", "filter": ["**/*"] },
+      { "from": "php-x64", "to": "php-x64", "filter": ["**/*"] },
+      { "from": "php-x86", "to": "php-x86", "filter": ["**/*"] }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "Maseghe.ico",
+      "publisherName": "Maseghe Enterprise Ltd"
+    },
+ "nsis": {
+  "oneClick": false,
+  "perMachine": false,
+  "allowToChangeInstallationDirectory": true,
+  "createDesktopShortcut": true,
+  "createStartMenuShortcut": true,
+  "shortcutName": "Kaunta",
+  "installerIcon": "Maseghe.ico",
+  "uninstallerIcon": "Maseghe.ico",
+  "license": "build/license.txt",
+  "installerSidebar": "build/installerSidebar.bmp",
+  "uninstallerSidebar": "build/uninstallerSidebar.bmp",
+  "deleteAppDataOnUninstall": false,
+  "runAfterFinish": true
+}
+  },
+  "devDependencies": {
+    "electron": "22.3.27",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "docx": "^9.6.1",
+    "pdfkit": "^0.18.0",
+    "sql.js": "^1.14.1",
+    "xlsx": "^0.18.5"
+  }
+}

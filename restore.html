@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Restore POS Data</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f8f8fc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+  .header {
+    background: #1e1b4b;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .header h1 { color: #fff; font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+  .header p  { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 3px; }
+
+  .body { padding: 28px 32px 32px; }
+
+  .warning {
+    background: #fff8e6;
+    border: 1px solid #fcd34d;
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .warning svg { flex-shrink: 0; margin-top: 1px; }
+  .warning p { font-size: 12.5px; color: #854d0e; line-height: 1.5; }
+  .warning strong { color: #713f12; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6b7280;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .option-card {
+    border: 1.5px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    background: #fff;
+    position: relative;
+  }
+  .option-card:hover { border-color: #1e1b4b; background: #f8f8fc; }
+  .option-card.selected { border-color: #1e1b4b; background: #f5f5ff; }
+  .option-icon {
+    width: 44px; height: 44px;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .option-icon.sqlite { background: #eef2ff; }
+  .option-icon.excel  { background: #f0fdf4; }
+  .option-text h3 { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 3px; }
+  .option-text p  { font-size: 12px; color: #6b7280; }
+  .radio {
+    width: 18px; height: 18px;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    margin-left: auto;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all .15s;
+  }
+  .option-card.selected .radio {
+    border-color: #1e1b4b;
+    background: #1e1b4b;
+  }
+  .option-card.selected .radio::after {
+    content: '';
+    width: 7px; height: 7px;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  .file-drop {
+    border: 2px dashed #d1d5db;
+    border-radius: 14px;
+    padding: 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s;
+    margin: 20px 0 24px;
+    background: #fafafa;
+  }
+  .file-drop:hover { border-color: #1e1b4b; background: #f5f5ff; }
+  .file-drop.has-file { border-color: #1e1b4b; border-style: solid; background: #f5f5ff; }
+  .file-drop svg { margin-bottom: 10px; }
+  .file-drop p { font-size: 13px; color: #6b7280; }
+  .file-drop .file-name { font-size: 13px; font-weight: 600; color: #1e1b4b; word-break: break-all; }
+
+  .btn-restore {
+    width: 100%;
+    padding: 13px;
+    background: #1e1b4b;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-restore:hover:not(:disabled) { background: #2d2a6e; transform: translateY(-1px); }
+  .btn-restore:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .result {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .result.success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; display: block; }
+  .result.error   { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; display: block; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="header-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/>
+        <path d="M3.51 15a9 9 0 1 0 .49-3.96"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Restore POS Data</h1>
+      <p>Import from a previous backup file</p>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="warning">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <p><strong>A safety backup will be created automatically</strong> before restoring. Your current data will not be lost.</p>
+    </div>
+
+    <p class="section-label">Restore from</p>
+
+    <div class="option-card selected" id="opt-sqlite" onclick="selectType('sqlite')">
+      <div class="option-icon sqlite">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+        </svg>
+      </div>
+      <div class="option-text">
+        <h3>SQLite Backup</h3>
+        <p>Full database restore from .sqlite file</p>
+      </div>
+      <div class="radio"></div>
+    </div>
+
+    <div class="option-card" id="opt-excel" onclick="selectType('excel')">
+      <div class="option-icon excel">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="8" y1="13" x2="16" y2="13"/>
+          <line x1="8" y1="17" x2="16" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <div class="option-text">
+        <h3>Excel Report</h3>
+        <p>Import records from .xlsx file</p>
+      </div>
+      <div class="radio"></div>
+    </div>
+
+    <div class="file-drop" id="drop-zone" onclick="pickFile()">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <p id="drop-label">Click to select a backup file</p>
+      <p style="font-size:11px;color:#9ca3af;margin-top:4px;" id="drop-hint">Supports .sqlite and .xlsx files</p>
+    </div>
+
+    <button class="btn-restore" id="btn-restore" disabled onclick="doRestore()">
+      <div class="spinner" id="spinner"></div>
+      <svg id="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/>
+        <path d="M3.51 15a9 9 0 1 0 .49-3.96"/>
+      </svg>
+      <span id="btn-label">Restore Data</span>
+    </button>
+
+    <div class="result" id="result"></div>
+  </div>
+</div>
+
+<script>
+  const { ipcRenderer } = require('electron');
+
+  let selectedType = 'sqlite';
+  let selectedFile = null;
+
+  function selectType(type) {
+    selectedType = type;
+    document.getElementById('opt-sqlite').classList.toggle('selected', type === 'sqlite');
+    document.getElementById('opt-excel').classList.toggle('selected',  type === 'excel');
+    selectedFile = null;
+    document.getElementById('drop-zone').classList.remove('has-file');
+    document.getElementById('drop-label').textContent = 'Click to select a backup file';
+    document.getElementById('drop-hint').textContent  = type === 'sqlite' ? 'Supports .sqlite files' : 'Supports .xlsx files';
+    document.getElementById('btn-restore').disabled = true;
+    document.getElementById('result').className = 'result';
+  }
+
+  async function pickFile() {
+    const res = await ipcRenderer.invoke('restore-select-file');
+    if (res.canceled) return;
+    selectedFile = res.filePath;
+    const name = selectedFile.split('\\\\').pop();
+    document.getElementById('drop-zone').classList.add('has-file');
+    document.getElementById('drop-label').innerHTML = '<span class="file-name">📄 ' + name + '</span>';
+    document.getElementById('drop-hint').textContent = 'Click to change file';
+    document.getElementById('btn-restore').disabled = false;
+    document.getElementById('result').className = 'result';
+  }
+
+  async function doRestore() {
+    if (!selectedFile) return;
+
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('btn-icon').style.display = 'none';
+    document.getElementById('btn-label').textContent = 'Restoring...';
+    document.getElementById('btn-restore').disabled = true;
+    document.getElementById('result').className = 'result';
+
+    const channel = selectedType === 'sqlite' ? 'restore-from-sqlite' : 'restore-from-excel';
+    const res = await ipcRenderer.invoke(channel, selectedFile);
+
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('btn-icon').style.display = 'block';
+    document.getElementById('btn-label').textContent = 'Restore Data';
+    document.getElementById('btn-restore').disabled = false;
+
+    const el = document.getElementById('result');
+    el.className = 'result ' + (res.success ? 'success' : 'error');
+    if (res.success) {
+      const lines = res.message.split('\n');
+      el.innerHTML = '<strong>✅ Restore complete! Restart POS to see changes.</strong><br><br>' +
+        lines.map(l => {
+          const [label, rest] = l.split(': ');
+          return `<span style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(0,0,0,0.06)"><span>${label}</span><span>${rest}</span></span>`;
+        }).join('');
+    } else {
+      el.textContent = '❌ ' + res.message;
+    }
+  }
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
